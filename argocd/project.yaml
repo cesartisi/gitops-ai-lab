@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+spec:
+  description: GitOps AI lab
+  sourceRepos:
+    - https://github.com/cesartisi/gitops-ai-lab.git
+    - https://qdrant.github.io/qdrant-helm
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: qdrant
+    - server: https://kubernetes.default.svc
+      namespace: embedding-api-staging
+    - server: https://kubernetes.default.svc
+      namespace: embedding-api-prod
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
