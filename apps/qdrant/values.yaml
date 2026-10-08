@@ -8,4 +8,4 @@ resources:
     cpu: 100m
     memory: 256Mi
   limits:
-    memory: 512Mi   # Etapa 7: troque para 1Gi via commit
+    memory: 1Gi   # Etapa 7: troque para 1Gi via commit
