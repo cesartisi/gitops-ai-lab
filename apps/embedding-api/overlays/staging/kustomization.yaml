@@ -23,7 +23,7 @@ configMapGenerator:
     literals:
       - ENVIRONMENT=staging
       - COLLECTION_PREFIX=docs-staging
-      - MODEL_VERSION=v1
+      - MODEL_VERSION=v2
 
 generatorOptions:
   annotations:
