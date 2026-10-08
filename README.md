@@ -30,17 +30,35 @@ diferentes não são comparáveis.
 
 Docker, kubectl, [kind](https://kind.sigs.k8s.io/), git e uma conta no GitHub. (CLI do Argo CD é opcional.)
 
+### Acesso no Windows após a preparação deste laboratório
+
+Com o Docker Desktop iniciado, execute na raiz do repositório:
+
+```powershell
+.\scripts\abrir-lab.ps1 -MostrarSenha
+```
+
+O script configura `PATH` e `KUBECONFIG` nesta sessão, abre os acessos locais e mostra
+a senha inicial do usuário `admin`. A configuração e o kind desta instalação ficam
+em `.lab-local/`, ignorado pelo Git. O script reabre um cluster já preparado; não cria
+um cluster novo. Argo CD: https://localhost:8080; API staging: http://localhost:9000/info;
+API produção: http://localhost:9001/info. Se um rollout encerrar o port-forward, execute
+o script novamente.
+
+Os exemplos das etapas abaixo usam Bash. No PowerShell 5.1, use `Invoke-RestMethod`
+para chamadas HTTP e execute comandos separados em vez de usar `&&` ou `&` ao final.
+
 ## Etapa 0 — Fork
 
 1. Faça fork deste repositório e clone o seu fork.
-2. Troque `SEU_USUARIO` por seu usuário nos três arquivos de `argocd/` (`qdrant.yaml`, `embedding-api-staging.yaml`, `embedding-api-prod.yaml`); commit e push.
+2. Ajuste as URLs Git nos três arquivos de aplicação em `argocd/` (`qdrant.yaml`, `embedding-api-staging.yaml`, `embedding-api-prod.yaml`) e em `argocd/project.yaml` para o seu fork; commit e push. Neste fork, o usuário é `cesartisi`.
 
 ## Etapa 1 — Cluster e Argo CD
 
 ```bash
 kind create cluster --name gitops-lab
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl -n argocd rollout status deploy/argocd-server
 kubectl apply -f argocd/project.yaml
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo
@@ -109,16 +127,23 @@ curl -s "localhost:9000/search?q=Git&k=2"   # hits: [] -> a coleção nova está
 Depois: **promova para prod via Pull Request** (mesma mudança em `overlays/prod`) e compare os dois
 ambientes na UI do Argo CD.
 
+Para criar a aplicação de produção pela primeira vez, execute
+`kubectl apply -f argocd/embedding-api-prod.yaml`. Depois da promoção, reindexe também
+nesse ambiente: sua coleção `docs-prod-v2` é separada da coleção de staging.
+
 ## Etapa 6 — Rollback via Git
 
 ```bash
-git log --oneline
-git revert HEAD && git push                 # volta MODEL_VERSION=v1
+git log --oneline -- apps/embedding-api/overlays/staging/kustomization.yaml
+git revert SHA_DO_COMMIT_STAGING_V2 && git push  # substitua pelo SHA da mudança para v2
 curl -s localhost:9000/info                 # collection: docs-staging-v1
 ```
 
 O rollback é um commit auditável e passa por revisão. Repare: a coleção `docs-staging-v2` **continua
 no Qdrant** — o Git reverte configuração, não dados.
+
+Reverta o commit específico de staging: após integrar o PR de produção, `HEAD` pode
+ser o merge desse PR. O rollback acima mantém produção em `v2` e retorna staging a `v1`.
 
 ## Etapa 7 (opcional) — Mudar o banco vetorial via Git
 
