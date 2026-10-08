@@ -1,0 +1,7 @@
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - group: argoproj.io
+        kind: Rollout
+        path: spec/template/spec/containers/envFrom/configMapRef/name
