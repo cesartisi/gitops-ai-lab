@@ -1,6 +1,6 @@
 # Values do Helm chart do Qdrant — versionados no SEU repositório.
 # Mudou aqui + commit + push => o Argo CD aplica no cluster.
-replicaCount: 1
+replicaCount: 3
 persistence:
   size: 1Gi
 resources:
